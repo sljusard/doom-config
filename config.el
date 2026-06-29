@@ -48,11 +48,6 @@
       doom-symbol-font (font-spec :family "JetBrainsMono Nerd Font"
                                    :size 14))
 
-;; (add-to-list '+dashboard-menu-sections
-;;               '("Открыть index"
-;;                  :icon (nerd-icons-octicon "nf-oct-file" :face 'doom-dashboard-menu-title)
-;;                  :action (lambda () (find-file "~/org/index.org"))))
-
 ;; This determines the style of line numbers in effect. If set to `nil', line
 ;; numbers are disabled. For relative line numbers, set this to `relative'.
 (setq display-line-numbers-type t)
@@ -77,7 +72,7 @@
 
 (setq calendar-week-start-day 1)
 
-;; org-roam settings
+;; 'org-roam' settings
 (setq org-roam-directory "~/org/")
 (setq org-roam-db-location "~/org/org-roam.db")
 (org-roam-db-autosync-mode)
@@ -182,7 +177,8 @@
 
 ;; 'org-roam' templates
 (setq org-roam-capture-templates
-      '(("d" "Default" plain "%?"
+      '(
+        ("d" "Default" plain "%?"
          :target (file+head "roam/%<%Y%m%d%H%M%S>-${slug}.org"
                             ":PROPERTIES:\n:CREATED: %U\n:END:\n#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n")
          :unnarrowed t)
@@ -198,8 +194,10 @@
 
 ;; 'org-capture' templates
 (setq org-capture-templates
-      '(("g" "Videogame" entry (here)
-         "* %?\n:PROPERTIES:\n:RELEASE_DATE:\n:DEVELOPER:\n:PUBLISHER:\n:FIRST_LAUNCH:\n:LAST_LAUNCH:\n:PLAYTIME:\n:END:\n"
+      '(
+        ("g" "Videogame" entry
+         (file+headline "videogames.org" "Библиотека")
+         "** %?\n:PROPERTIES:\n:RELEASE_DATE:\n:DEVELOPER:\n:PUBLISHER:\n:FIRST_LAUNCH:\n:LAST_LAUNCH:\n:PLAYTIME:\n:END:\n"
          :prepare-finalize org-id-get-create)
         ))
 
