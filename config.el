@@ -75,23 +75,9 @@
 ;; 'org-roam' settings
 (setq org-roam-directory "~/org/")
 (setq org-roam-db-location "~/org/org-roam.db")
+(setq org-roam-dailies-directory "log/")
 (org-roam-db-autosync-mode)
 
-(after! org-roam
-  (setq org-roam-dailies-directory "log/")
-  (setq org-roam-dailies-capture-templates
-        '(("j" "Journal" entry "* %<%d> %(my/month-russian-genitive) %<%Y>\n%?"
-           :target (file+head "journals/journal-%<%Y>-%<%m>.org"
-                            "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+STARTUP: fold\n")
-           :unnarrowed t
-           :prepare-finalize org-id-get-create))))
-
-(defun my/month-russian-genitive (&optional time)
-  "%m override in Russian (genitive case)"
-  (let ((month (string-to-number (format-time-string "%m" time))))
-    (nth (1- month)
-         '("января" "февраля" "марта" "апреля" "мая" "июня"
-           "июля" "августа" "сентября" "октября" "ноября" "декабря"))))
 
 ;; 'org-attach' settings
 (setq org-attach-use-inheritance t)
@@ -99,6 +85,77 @@
 (setq org-attach-auto-tag nil)
 (setq org-image-max-width 300)
 
+;; time settings
+;; (setenv "TZ" "UTC0")
+(setq system-time-locale "C")
+(setq org-timestamp-formats '("%Y-%m-%d %a" . "%Y-%m-%d %a %H:%M %z"))
+(setq org-property-format "%s %s")
+
+;; org-log
+(setq org-log-into-drawer t)
+(setq org-habit-show-habits-only-for-today nil)
+
+;; 'org-roam' node RU -> EN transliteration
+(after! org-roam
+    (defun my/translit-russian (str)
+        "ICAO Cyrillic to Latin transliteration (RU -> EN)"
+        (let ((translit-table
+            '(("а" . "a") ("б" . "b") ("в" . "v") ("г" . "g")
+                ("д" . "d") ("е" . "e") ("ё" . "e") ("ж" . "zh")
+                ("з" . "z") ("и" . "i") ("й" . "i") ("к" . "k")
+                ("л" . "l") ("м" . "m") ("н" . "n") ("о" . "o")
+                ("п" . "p") ("р" . "r") ("с" . "s") ("т" . "t")
+                ("у" . "u") ("ф" . "f") ("х" . "kh") ("ц" . "ts")
+                ("ч" . "ch") ("ш" . "sh") ("щ" . "shch") ("ъ" . "ie")
+                ("ы" . "y") ("ь" . "") ("э" . "e") ("ю" . "iu")
+                ("я" . "ia")
+                ("А" . "a") ("Б" . "b") ("В" . "v") ("Г" . "g")
+                ("Д" . "d") ("Е" . "e") ("Ё" . "e") ("Ж" . "zh")
+                ("З" . "z") ("И" . "i") ("Й" . "i") ("К" . "k")
+                ("Л" . "l") ("М" . "m") ("Н" . "n") ("О" . "o")
+                ("П" . "p") ("Р" . "r") ("С" . "s") ("Т" . "t")
+                ("У" . "u") ("Ф" . "f") ("Х" . "kh") ("Ц" . "ts")
+                ("Ч" . "ch") ("Ш" . "sh") ("Щ" . "shch") ("Ъ" . "ie")
+                ("Ы" . "y") ("Ь" . "") ("Э" . "e") ("Ю" . "iu")
+                ("Я" . "ia"))))
+        (dolist (pair translit-table str)
+            (setq str (replace-regexp-in-string
+                    (car pair) (cdr pair) str)))))
+
+    (defun my/org-roam-slug (node)
+        "Generate ${slug} with transliteration from Cyrillic using my/translit-russian"
+        (let* ((title (org-roam-node-title node))
+            (translitted (my/translit-russian title))
+            (slug (replace-regexp-in-string
+                    "[^a-z0-9]+" "-"
+                    (downcase translitted))))
+        (string-trim slug "-")))
+    (advice-add 'org-roam-node-slug :override #'my/org-roam-slug)
+)
+
+(defun my/month-russian-genitive (&optional time)
+  "%m override in Russian (genitive case)"
+  (let ((month (string-to-number (format-time-string "%m" time))))
+    (nth (1- month)
+        '("января" "февраля" "марта" "апреля" "мая" "июня"
+        "июля" "августа" "сентября" "октября" "ноября" "декабря"))))
+
+;; 'org-roam' project file numeration
+(defun my/org-roam-project-next-index ()
+  "Return next index number for current year project"
+  (let* ((year (format-time-string "%Y"))
+        (dir (expand-file-name "log/projects/" org-roam-directory))
+        (pattern (concat "^project-" year "-\\([0-9]\\{3\\}\\)"))
+        (files (directory-files dir nil pattern))
+        (numbers (mapcar
+                (lambda (f)
+                    (when (string-match pattern f)
+                    (string-to-number (match-string 1 f))))
+                files))
+        (numbers (delq nil numbers)))
+    (format "%03d" (1+ (if numbers (apply #'max numbers) 0)))))
+
+;; 'org-attach' file renamer
 (after! org-attach
   (defun my/org-attach-rename-on-attach (file)
     "Rename attachment on copying it to org-attach folder."
@@ -112,94 +169,38 @@
                 (cons (my/org-attach-rename-on-attach (car args))
                       (cdr args)))))
 
-;; time settings
-;; (setenv "TZ" "UTC0")
-(setq system-time-locale "C")
-(setq org-timestamp-formats '("%Y-%m-%d %a" . "%Y-%m-%d %a %H:%M %z"))
-(setq org-property-format "%s %s")
-
-;; org-log
-(setq org-log-into-drawer t)
-(setq org-habit-show-habits-only-for-today nil)
-
-;; org-roam node RU -> EN transliteration
+;; Templates
 (after! org-roam
-  (defun my/translit-russian (str)
-    "ICAO Cyrillic to Latin transliteration (RU -> EN)"
-    (let ((translit-table
-           '(("а" . "a") ("б" . "b") ("в" . "v") ("г" . "g")
-             ("д" . "d") ("е" . "e") ("ё" . "e") ("ж" . "zh")
-             ("з" . "z") ("и" . "i") ("й" . "i") ("к" . "k")
-             ("л" . "l") ("м" . "m") ("н" . "n") ("о" . "o")
-             ("п" . "p") ("р" . "r") ("с" . "s") ("т" . "t")
-             ("у" . "u") ("ф" . "f") ("х" . "kh") ("ц" . "ts")
-             ("ч" . "ch") ("ш" . "sh") ("щ" . "shch") ("ъ" . "ie")
-             ("ы" . "y") ("ь" . "") ("э" . "e") ("ю" . "iu")
-             ("я" . "ia")
-             ("А" . "a") ("Б" . "b") ("В" . "v") ("Г" . "g")
-             ("Д" . "d") ("Е" . "e") ("Ё" . "e") ("Ж" . "zh")
-             ("З" . "z") ("И" . "i") ("Й" . "i") ("К" . "k")
-             ("Л" . "l") ("М" . "m") ("Н" . "n") ("О" . "o")
-             ("П" . "p") ("Р" . "r") ("С" . "s") ("Т" . "t")
-             ("У" . "u") ("Ф" . "f") ("Х" . "kh") ("Ц" . "ts")
-             ("Ч" . "ch") ("Ш" . "sh") ("Щ" . "shch") ("Ъ" . "ie")
-             ("Ы" . "y") ("Ь" . "") ("Э" . "e") ("Ю" . "iu")
-             ("Я" . "ia"))))
-      (dolist (pair translit-table str)
-        (setq str (replace-regexp-in-string
-                   (car pair) (cdr pair) str)))))
+    (setq org-roam-capture-templates
+        '(
+            ("d" "Default" plain "%?"
+            :target (file+head "roam/%<%Y%m%d%H%M%S>-${slug}.org"
+                                ":PROPERTIES:\n:CREATED: %U\n:END:\n#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n")
+            :unnarrowed t)
+            ("p" "Project" plain "%?"
+            :target (file+head "log/projects/project-%<%Y>-%(my/org-roam-project-next-index)-${slug}.org"
+                                "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+CATEGORY: Project\n#+STARTUP: show2levels\n* PROJ ${title}")
+            :unnarrowed t)
+            ("j" "Journal" entry "* %<%d> %? %<%Y>"
+            :target (file+head "log/journals/journal-%<%Y>-%<%m>.org"
+                            "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+STARTUP: fold\n")
+            :unnarrowed t)
+            ))
 
-  (defun my/org-roam-slug (node)
-    "Generate ${slug} with transliteration from Cyrillic using my/translit-russian"
-    (let* ((title (org-roam-node-title node))
-           (translitted (my/translit-russian title))
-           (slug (replace-regexp-in-string
-                  "[^a-z0-9]+" "-"
-                  (downcase translitted))))
-      (string-trim slug "-")))
+    (setq org-roam-dailies-capture-templates
+        '(("j" "Journal" entry "* %<%d> %(my/month-russian-genitive) %<%Y>\n%?"
+            :target (file+head "journals/journal-%<%Y>-%<%m>.org"
+                            "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+STARTUP: fold\n")
+            :unnarrowed t
+            :prepare-finalize org-id-get-create)))
+)
 
-  (advice-add 'org-roam-node-slug :override #'my/org-roam-slug))
-
-;; org-roam project file numeration
-(defun my/org-roam-project-next-index ()
-  "Return next index number for current year project"
-  (let* ((year (format-time-string "%Y"))
-         (dir (expand-file-name "log/projects/" org-roam-directory))
-         (pattern (concat "^project-" year "-\\([0-9]\\{3\\}\\)"))
-         (files (directory-files dir nil pattern))
-         (numbers (mapcar
-                   (lambda (f)
-                     (when (string-match pattern f)
-                       (string-to-number (match-string 1 f))))
-                   files))
-         (numbers (delq nil numbers)))
-    (format "%03d" (1+ (if numbers (apply #'max numbers) 0)))))
-
-;; 'org-roam' templates
-(setq org-roam-capture-templates
-      '(
-        ("d" "Default" plain "%?"
-         :target (file+head "roam/%<%Y%m%d%H%M%S>-${slug}.org"
-                            ":PROPERTIES:\n:CREATED: %U\n:END:\n#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n")
-         :unnarrowed t)
-        ("p" "Project" plain "%?"
-         :target (file+head "log/projects/project-%<%Y>-%(my/org-roam-project-next-index)-${slug}.org"
-                            "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+CATEGORY: Project\n#+STARTUP: show2levels\n* PROJ ${title}")
-         :unnarrowed t)
-        ("j" "Journal" entry "* %<%d> %? %<%Y>"
-         :target (file+head "log/journals/journal-%<%Y>-%<%m>.org"
-                           "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+STARTUP: fold\n")
-         :unnarrowed t)
-        ))
-
-;; 'org-capture' templates
 (setq org-capture-templates
-      '(
-        ("g" "Videogame" entry
-         (file+headline "videogames.org" "Библиотека")
-         "** %?\n:PROPERTIES:\n:RELEASE_DATE:\n:DEVELOPER:\n:PUBLISHER:\n:FIRST_LAUNCH:\n:LAST_LAUNCH:\n:PLAYTIME:\n:END:\n"
-         :prepare-finalize org-id-get-create)
-        ))
+    '(("g" "Videogame" entry
+       (file+headline "videogames.org" "Библиотека")
+       "** %?\n:PROPERTIES:\n:RELEASE_DATE:\n:DEVELOPER:\n:PUBLISHER:\n:FIRST_LAUNCH:\n:LAST_LAUNCH:\n:PLAYTIME:\n:END:\n"
+       :prepare-finalize org-id-get-create)
+      ))
 
 ;; org-mode encryption
 (require 'epa-file)
