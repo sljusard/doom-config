@@ -80,14 +80,14 @@
 (after! org-roam
   (setq org-roam-dailies-directory "log/")
   (setq org-roam-dailies-capture-templates
-        '(("j" "Journal" entry "* %<%d> %(mR) %<%Y>\n%?"
+        '(("j" "Journal" entry "* %<%d> %(my/month-russian-genitive) %<%Y>\n%?"
            :target (file+head "journals/journal-%<%Y>-%<%m>.org"
                             "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+STARTUP: fold\n")
            :unnarrowed t
            :prepare-finalize org-id-get-create))))
 
-(defun mR (&optional time)
-  "%m override in Russian"
+(defun my/month-russian-genitive (&optional time)
+  "%m override in Russian (genitive case)"
   (let ((month (string-to-number (format-time-string "%m" time))))
     (nth (1- month)
          '("января" "февраля" "марта" "апреля" "мая" "июня"
