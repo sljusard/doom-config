@@ -202,13 +202,6 @@
        :prepare-finalize org-id-get-create)
       ))
 
-;; org-mode encryption
-(require 'epa-file)
-(epa-file-enable)
-(setq epa-file-encrypt-to "232357344FADD21682AB48890AA6434C24299FF9")
-(setq org-crypt-key "232357344FADD21682AB48890AA6434C24299FF9")
-(setq epg-pinentry-mode 'loopback)
-
 ;; using RU layout for commands
 (use-package reverse-im
   :config
