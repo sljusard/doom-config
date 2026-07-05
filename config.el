@@ -232,6 +232,13 @@
   (setq reverse-im-input-methods '("russian-colemak"))
   (reverse-im-mode 1))
 
+(use-package elfeed
+  :config
+  (setq elfeed-feeds
+        '(("https://www.factorio.com/blog/rss" videogame)
+          ("https://planet.emacslife.com/atom.xml" software)
+          ("https://ru.themoscowtimes.com/rss/news" news))))
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `with-eval-after-load' block, otherwise Doom's defaults may override your
 ;; settings. E.g.
