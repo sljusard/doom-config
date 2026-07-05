@@ -200,6 +200,9 @@
        (file+headline "videogames.org" "Библиотека")
        "** %?\n:PROPERTIES:\n:RELEASE_DATE:\n:DEVELOPER:\n:PUBLISHER:\n:FIRST_LAUNCH:\n:LAST_LAUNCH:\n:PLAYTIME:\n:END:\n"
        :prepare-finalize org-id-get-create)
+      ("i" "Idea" entry
+       (file+headline "log/ideas.org" "Обдумать")
+       "** IDEA %?")
       ))
 
 ;; using RU layout for commands
