@@ -10,6 +10,7 @@
 ;; Use 'C-h f package\!' to look up documentation for the `package!' macro.
 
 (package! reverse-im)
+(package! elfeed-goodies :disable t)
 
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
 ;; (package! some-package)
