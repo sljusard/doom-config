@@ -236,16 +236,16 @@
   (reverse-im-mode 1))
 
 ;; 'elfeed' settings
-(setq elfeed-feeds
-      '(("https://www.factorio.com/blog/rss" videogame)
-        ("https://planet.emacslife.com/atom.xml" software)
-        ("https://ru.themoscowtimes.com/rss/news" news politics)
-        ("https://www.nasa.gov/feeds/iotd-feed" space)))
+;; (setq elfeed-feeds
+;;      '(("https://www.factorio.com/blog/rss" videogame)
+;;        ("https://planet.emacslife.com/atom.xml" software)
+;;        ("https://ru.themoscowtimes.com/rss/news" news politics)
+;;        ("https://www.nasa.gov/feeds/iotd-feed" space)))
 
-;; (map! :leader
-;;      "e o" #'elfeed)
-;; (map! :leader
-;;      "e t" #'elfeed-tree)
+(map! :leader
+     "e o" #'elfeed)
+(map! :leader
+     "e t" #'elfeed-tree)
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `with-eval-after-load' block, otherwise Doom's defaults may override your
