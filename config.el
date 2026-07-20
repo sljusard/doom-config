@@ -191,6 +191,35 @@
         (org-roam-db-sync)
         (message "Renamed to %s" (file-name-nondirectory new-file))))))
 
+;; Automatic ':MODIFIED:' property in 'org-mode'
+(defun my/org-update-modified ()
+  "Обновить :MODIFIED: сразу после :CREATED: в property drawer.
+Работает только если :CREATED: существует. Если :MODIFIED: уже есть
+в этом drawer — переносит/обновляет его на позицию после :CREATED:."
+  (when (derived-mode-p 'org-mode)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward "^\\([ \t]*\\):CREATED:.*$" nil t)
+        (let ((indent (match-string 1))
+              (created-end (line-end-position))
+              (drawer-end (save-excursion
+                            (re-search-forward "^[ \t]*:END:[ \t]*$" nil t)
+                            (line-beginning-position))))
+          ;; действуем только если :CREATED: внутри property drawer
+          (when drawer-end
+            ;; удаляем существующий :MODIFIED: внутри этого drawer
+            (save-excursion
+              (goto-char created-end)
+              (when (re-search-forward "^[ \t]*:MODIFIED:.*\n" drawer-end t)
+                (replace-match "")))
+            ;; вставляем свежий :MODIFIED: сразу после строки :CREATED:
+            (goto-char created-end)
+            (insert (format "\n%s:MODIFIED: %s"
+                            indent
+                            (format-time-string (org-time-stamp-format t 'inactive))))))))))
+
+(add-hook 'before-save-hook #'my/org-update-modified)
+
 ;; Templates
 (after! org-roam
     (setq org-roam-capture-templates
