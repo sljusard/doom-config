@@ -269,6 +269,25 @@
 (map! :leader
      "e t" #'elfeed-tree)
 
+;; Render image enclosures (e.g. the NASA "Image of the Day" feed) inline in the
+;; entry buffer. By default elfeed only lists them as links under "Enclosures:".
+(after! elfeed-show
+  (defadvice! +rss-show-enclosure-images-a (&rest _)
+    :after #'elfeed-show-refresh
+    (when-let* ((entry elfeed-show-entry)
+                (enclosures (elfeed-entry-enclosures entry)))
+      (let ((inhibit-read-only t))
+        (save-excursion
+          (goto-char (point-max))
+          (dolist (enc enclosures)
+            (let ((url  (car enc))
+                  (type (cadr enc)))
+              (when (and (stringp url)
+                         (or (and (stringp type) (string-prefix-p "image/" type))
+                             (string-match-p "\\.\\(?:png\\|jpe?g\\|gif\\|webp\\)\\(?:\\?.*\\)?\\'" url)))
+                (insert "\n")
+                (elfeed-insert-html (format "<img src=\"%s\">" url))))))))))
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `with-eval-after-load' block, otherwise Doom's defaults may override your
 ;; settings. E.g.
