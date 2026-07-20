@@ -169,6 +169,28 @@
                 (cons (my/org-attach-rename-on-attach (car args))
                       (cdr args)))))
 
+;; rename slug according to new #+TITLE
+(defun my/org-roam-rename-file-to-title ()
+  "Переименовать текущий файл org-roam в соответствии с #+TITLE."
+  (interactive)
+  (when-let* ((node (org-roam-node-at-point))
+              (title (org-roam-node-title node))
+              (new-slug (org-roam-node-slug node))
+              (old-file (buffer-file-name))
+              (dir (file-name-directory old-file)))
+    ;; сохраняем префикс с timestamp, если он есть (например 20240101120000-)
+    (let* ((old-name (file-name-nondirectory old-file))
+           (timestamp (if (string-match "^\\([0-9]\\{14\\}\\)-" old-name)
+                          (concat (match-string 1 old-name) "-")
+                        ""))
+           (new-file (expand-file-name
+                      (concat timestamp new-slug ".org") dir)))
+      (unless (string-equal old-file new-file)
+        (rename-file old-file new-file)
+        (set-visited-file-name new-file t t)
+        (org-roam-db-sync)
+        (message "Renamed to %s" (file-name-nondirectory new-file))))))
+
 ;; Templates
 (after! org-roam
     (setq org-roam-capture-templates
