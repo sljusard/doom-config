@@ -212,18 +212,23 @@
                 (replace-match (concat "#+AUTHOR: " new) t t)
                 (setq changed t))))
           (when changed
-            (save-buffer)
+            (let ((my/inhibit-org-update-modified t))
+              (save-buffer))
             (cl-incf n)))
         (when (and (not visiting) (buffer-live-p buf))
           (kill-buffer buf))))
     (message "Updated #+AUTHOR in %d file(s)." n)))
+
+(defvar my/inhibit-org-update-modified nil
+  "When non-nil, `my/org-update-modified' does nothing.")
 
 ;; Automatic ':MODIFIED:' property in 'org-mode'
 (defun my/org-update-modified ()
   "Обновить :MODIFIED: сразу после :CREATED: в property drawer.
 Работает только если :CREATED: существует. Если :MODIFIED: уже есть
 в этом drawer — переносит/обновляет его на позицию после :CREATED:."
-  (when (derived-mode-p 'org-mode)
+  (when (and (derived-mode-p 'org-mode)
+             (not my/inhibit-org-update-modified))
     (save-excursion
       (goto-char (point-min))
       (while (re-search-forward "^\\([ \t]*\\):CREATED:.*$" nil t)
