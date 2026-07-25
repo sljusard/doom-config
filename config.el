@@ -191,6 +191,33 @@
         (org-roam-db-sync)
         (message "Renamed to %s" (file-name-nondirectory new-file))))))
 
+;; #+AUTHOR replacer
+(defun my/org-replace-author (old new)
+  "Replace `#+AUTHOR: OLD' with `#+AUTHOR: NEW' in every .org file under `org-directory'."
+  (interactive (list (read-string "Old author: ")
+                     (read-string "New author: ")))
+  (let ((files (directory-files-recursively org-directory "\\.org\\'"))
+        (n 0))
+    (dolist (file files)
+      (let* ((visiting (find-buffer-visiting file))
+             (buf (or visiting (find-file-noselect file t)))
+             (changed nil))
+        (with-current-buffer buf
+          (save-excursion
+            (goto-char (point-min))
+            (let ((case-fold-search t))
+              (while (re-search-forward
+                      (format "^[ \t]*#\\+AUTHOR:[ \t]*%s[ \t]*$" (regexp-quote old))
+                      nil t)
+                (replace-match (concat "#+AUTHOR: " new) t t)
+                (setq changed t))))
+          (when changed
+            (save-buffer)
+            (cl-incf n)))
+        (when (and (not visiting) (buffer-live-p buf))
+          (kill-buffer buf))))
+    (message "Updated #+AUTHOR in %d file(s)." n)))
+
 ;; Automatic ':MODIFIED:' property in 'org-mode'
 (defun my/org-update-modified ()
   "Обновить :MODIFIED: сразу после :CREATED: в property drawer.
