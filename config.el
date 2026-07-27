@@ -258,22 +258,22 @@
         '(
             ("d" "Default" plain "%?"
             :target (file+head "roam/%<%Y%m%d%H%M%S>-${slug}.org"
-                                ":PROPERTIES:\n:CREATED: %U\n:END:\n#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n")
+                                ":PROPERTIES:\n:CREATED: %U\n:END:\n#+TITLE: ${title}\n#+AUTHOR: Denis Slyusar\n")
             :unnarrowed t)
             ("p" "Project" plain "%?"
             :target (file+head "log/projects/project-%<%Y>-%(my/org-roam-project-next-index)-${slug}.org"
-                                "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+CATEGORY: Project\n#+STARTUP: show2levels\n* PROJ ${title}")
+                                "#+TITLE: ${title}\n#+AUTHOR: Denis Slyusar\n#+CATEGORY: Project\n#+STARTUP: show2levels\n* PROJ ${title}")
             :unnarrowed t)
             ("j" "Journal" entry "* %<%d> %? %<%Y>"
             :target (file+head "log/journals/journal-%<%Y>-%<%m>.org"
-                            "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+STARTUP: fold\n")
+                            "#+TITLE: ${title}\n#+AUTHOR: Denis Slyusar\n#+STARTUP: fold\n")
             :unnarrowed t)
             ))
 
     (setq org-roam-dailies-capture-templates
         '(("j" "Journal" entry "* %<%d> %(my/month-russian-genitive) %<%Y>\n%?"
             :target (file+head "journals/journal-%<%Y>-%<%m>.org"
-                            "#+TITLE: ${title}\n#+AUTHOR: Denis Sliusar\n#+STARTUP: fold\n")
+                            "#+TITLE: ${title}\n#+AUTHOR: Denis Slyusar\n#+STARTUP: fold\n")
             :unnarrowed t
             :prepare-finalize org-id-get-create)))
 )
