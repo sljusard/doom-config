@@ -101,6 +101,48 @@
 
 (after! org-roam
 
+  (defconst my/sbgn-table
+    '((?а . "a")  (?б . "b")    (?в . "v")   (?г . "g")  (?д . "d")
+      (?е . "e")  (?ё . "yo")   (?ж . "zh")  (?з . "z")  (?и . "i")
+      (?й . "y")  (?к . "k")    (?л . "l")   (?м . "m")  (?н . "n")
+      (?о . "o")  (?п . "p")    (?р . "r")   (?с . "s")  (?т . "t")
+      (?у . "u")  (?ф . "f")    (?х . "kh")  (?ц . "ts") (?ч . "ch")
+      (?ш . "sh") (?щ . "shch") (?ъ . "")    (?ы . "y")  (?ь . "")
+      (?э . "e")  (?ю . "yu")   (?я . "ya"))
+    "Simplified BGN/PCGN romanization of Russian used by Wikipedia.
+Differences from classic BGN/PCGN: ё is always yo rather than ë/yë, and
+ъ/ь are dropped rather than rendered as modifier primes. The entry for е here
+is the default; `my/translit-sbgn' overrides it word-initially and after
+`my/sbgn-y-triggers'.")
+
+  (defconst my/sbgn-y-triggers
+    '(?а ?е ?ё ?и ?о ?у ?ы ?э ?ю ?я ?й ?ъ ?ь)
+    "Cyrillic characters after which е romanizes as ye rather than e.
+The ten vowels plus й, ъ and ь. The word-initial case is handled separately
+by the nil-`prev' branch in `my/translit-sbgn'.")
+
+   (defun my/translit-sbgn (str)
+    "Romanize STR from Russian Cyrillic using simplified BGN/PCGN.
+Applies BGN's positional rule for е (ye word-initially and after a vowel, й,
+ъ or ь; e elsewhere) and collapses word-final -iy/-yy to -y.
+Non-Cyrillic characters pass through. Output is lowercase."
+    (let ((prev nil)   ; previous Cyrillic char, nil at a word boundary
+          (acc  nil))
+      (dolist (ch (append str nil))
+        (let* ((lc   (downcase ch))
+               (base (alist-get lc my/sbgn-table nil nil #'eq)))
+          (push (cond
+                 ((null base) (char-to-string ch))
+                 ((eq lc ?е)
+                  (if (or (null prev) (memq prev my/sbgn-y-triggers)) "ye" "e"))
+                 (t base))
+                acc)
+          ;; nil for anything not in the table, so punctuation, spaces and
+          ;; Latin all count as word boundaries for the rule above.
+          (setq prev (and base lc))))
+      (replace-regexp-in-string "\\(?:iy\\|yy\\)\\b" "y"
+                                (apply #'concat (nreverse acc)))))
+
   (defconst my/icao-table
     '((?а . "a")  (?б . "b")    (?в . "v")   (?г . "g")  (?д . "d")
       (?е . "e")  (?ё . "e")    (?ж . "zh")  (?з . "z")  (?и . "i")
@@ -113,7 +155,7 @@
 Keys are lowercase characters; callers downcase before lookup.")
 
   (defun my/translit-icao (str)
-    "Romanize STR from Russian Cyrillic per ICAO Doc 9303 (RU -> EN).
+    "Romanize STR from Russian Cyrillic using ICAO standard.
 Context-free. Non-Cyrillic characters pass through. Output is lowercase."
     (mapconcat (lambda (ch)
                  (or (alist-get (downcase ch) my/icao-table nil nil #'eq)
