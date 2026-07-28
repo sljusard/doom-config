@@ -97,40 +97,75 @@
 
 ;; 'org-roam' node RU -> EN transliteration
 (after! org-roam
-    (defun my/translit-russian (str)
-        "ICAO Cyrillic to Latin transliteration (RU -> EN)"
-        (let ((translit-table
-            '(("а" . "a") ("б" . "b") ("в" . "v") ("г" . "g")
-                ("д" . "d") ("е" . "e") ("ё" . "e") ("ж" . "zh")
-                ("з" . "z") ("и" . "i") ("й" . "i") ("к" . "k")
-                ("л" . "l") ("м" . "m") ("н" . "n") ("о" . "o")
-                ("п" . "p") ("р" . "r") ("с" . "s") ("т" . "t")
-                ("у" . "u") ("ф" . "f") ("х" . "kh") ("ц" . "ts")
-                ("ч" . "ch") ("ш" . "sh") ("щ" . "shch") ("ъ" . "ie")
-                ("ы" . "y") ("ь" . "") ("э" . "e") ("ю" . "iu")
-                ("я" . "ia")
-                ("А" . "a") ("Б" . "b") ("В" . "v") ("Г" . "g")
-                ("Д" . "d") ("Е" . "e") ("Ё" . "e") ("Ж" . "zh")
-                ("З" . "z") ("И" . "i") ("Й" . "i") ("К" . "k")
-                ("Л" . "l") ("М" . "m") ("Н" . "n") ("О" . "o")
-                ("П" . "p") ("Р" . "r") ("С" . "s") ("Т" . "t")
-                ("У" . "u") ("Ф" . "f") ("Х" . "kh") ("Ц" . "ts")
-                ("Ч" . "ch") ("Ш" . "sh") ("Щ" . "shch") ("Ъ" . "ie")
-                ("Ы" . "y") ("Ь" . "") ("Э" . "e") ("Ю" . "iu")
-                ("Я" . "ia"))))
-        (dolist (pair translit-table str)
-            (setq str (replace-regexp-in-string
-                    (car pair) (cdr pair) str)))))
 
-    (defun my/org-roam-slug (node)
-        "Generate ${slug} with transliteration from Cyrillic using my/translit-russian"
-        (let* ((title (org-roam-node-title node))
-            (translitted (my/translit-russian title))
-            (slug (replace-regexp-in-string
-                    "[^a-z0-9]+" "-"
-                    (downcase translitted))))
-        (string-trim slug "-")))
-    (advice-add 'org-roam-node-slug :override #'my/org-roam-slug)
+  (defconst my/icao-table
+    '((?а . "a")  (?б . "b")    (?в . "v")   (?г . "g")  (?д . "d")
+      (?е . "e")  (?ё . "e")    (?ж . "zh")  (?з . "z")  (?и . "i")
+      (?й . "i")  (?к . "k")    (?л . "l")   (?м . "m")  (?н . "n")
+      (?о . "o")  (?п . "p")    (?р . "r")   (?с . "s")  (?т . "t")
+      (?у . "u")  (?ф . "f")    (?х . "kh")  (?ц . "ts") (?ч . "ch")
+      (?ш . "sh") (?щ . "shch") (?ъ . "ie")  (?ы . "y")  (?ь . "")
+      (?э . "e")  (?ю . "iu")   (?я . "ia"))
+    "ICAO romanization of Russian.
+Keys are lowercase characters; callers downcase before lookup.")
+
+  (defun my/translit-icao (str)
+    "Romanize STR from Russian Cyrillic per ICAO Doc 9303 (RU -> EN).
+Context-free. Non-Cyrillic characters pass through. Output is lowercase."
+    (mapconcat (lambda (ch)
+                 (or (alist-get (downcase ch) my/icao-table nil nil #'eq)
+                     (char-to-string ch)))
+               str ""))
+
+  (defvar my/slug-transliterator #'my/translit-icao
+    "Function used to romanize a node title before slugification")
+
+  (defun my/org-roam-slug (node)
+    "Generate ${slug} for NODE, romanizing Cyrillic via `my/slug-transliterator'"
+    (let* ((title (org-roam-node-title node))
+        (translitted (funcall my/slug-transliterator title))
+        ;; `downcase' still matters: Latin text in the title is passed
+        ;; through by the transliterators with its case intact.
+        (slug (replace-regexp-in-string
+               "[^a-z0-9]+" "-"
+               (downcase translitted))))
+    (string-trim slug "-+" "-+")))
+
+  (advice-add 'org-roam-node-slug :override #'my/org-roam-slug)
+
+    ;; (defun my/translit-russian (str)
+    ;;     "ICAO Cyrillic to Latin transliteration (RU -> EN)"
+    ;;     (let ((translit-table
+    ;;         '(("а" . "a") ("б" . "b") ("в" . "v") ("г" . "g")
+    ;;             ("д" . "d") ("е" . "e") ("ё" . "e") ("ж" . "zh")
+    ;;             ("з" . "z") ("и" . "i") ("й" . "i") ("к" . "k")
+    ;;             ("л" . "l") ("м" . "m") ("н" . "n") ("о" . "o")
+    ;;             ("п" . "p") ("р" . "r") ("с" . "s") ("т" . "t")
+    ;;             ("у" . "u") ("ф" . "f") ("х" . "kh") ("ц" . "ts")
+    ;;             ("ч" . "ch") ("ш" . "sh") ("щ" . "shch") ("ъ" . "ie")
+    ;;             ("ы" . "y") ("ь" . "") ("э" . "e") ("ю" . "iu")
+    ;;             ("я" . "ia")
+    ;;             ("А" . "a") ("Б" . "b") ("В" . "v") ("Г" . "g")
+    ;;             ("Д" . "d") ("Е" . "e") ("Ё" . "e") ("Ж" . "zh")
+    ;;             ("З" . "z") ("И" . "i") ("Й" . "i") ("К" . "k")
+    ;;             ("Л" . "l") ("М" . "m") ("Н" . "n") ("О" . "o")
+    ;;             ("П" . "p") ("Р" . "r") ("С" . "s") ("Т" . "t")
+    ;;             ("У" . "u") ("Ф" . "f") ("Х" . "kh") ("Ц" . "ts")
+    ;;             ("Ч" . "ch") ("Ш" . "sh") ("Щ" . "shch") ("Ъ" . "ie")
+    ;;             ("Ы" . "y") ("Ь" . "") ("Э" . "e") ("Ю" . "iu")
+    ;;             ("Я" . "ia"))))
+    ;;     (dolist (pair translit-table str)
+    ;;         (setq str (replace-regexp-in-string
+    ;;                 (car pair) (cdr pair) str)))))
+
+    ;; (defun my/org-roam-slug (node)
+    ;;     "Generate ${slug} with transliteration from Cyrillic using my/translit-russian"
+    ;;     (let* ((title (org-roam-node-title node))
+    ;;         (translitted (my/translit-russian title))
+    ;;         (slug (replace-regexp-in-string
+    ;;                 "[^a-z0-9]+" "-"
+    ;;                 (downcase translitted))))
+    ;;     (string-trim slug "-")))
 )
 
 (defun my/month-russian-genitive (&optional time)
