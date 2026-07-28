@@ -95,7 +95,10 @@
 (setq org-log-into-drawer t)
 (setq org-habit-show-habits-only-for-today nil)
 
-;; 'org-roam' node RU -> EN transliteration
+;; ================================================ ;;
+;; === 'org-roam' node RU -> EN transliteration === ;;
+;; ================================================ ;;
+
 (after! org-roam
 
   (defconst my/icao-table
@@ -206,14 +209,14 @@ Context-free. Non-Cyrillic characters pass through. Output is lowercase."
 
 ;; rename slug according to new #+TITLE
 (defun my/org-roam-rename-file-to-title ()
-  "Переименовать текущий файл org-roam в соответствии с #+TITLE."
+  "Rename org-roam file slug according to the #+TITLE."
   (interactive)
   (when-let* ((node (org-roam-node-at-point))
               (title (org-roam-node-title node))
               (new-slug (org-roam-node-slug node))
               (old-file (buffer-file-name))
               (dir (file-name-directory old-file)))
-    ;; сохраняем префикс с timestamp, если он есть (например 20240101120000-)
+    ;; keeping timestamp prefix if present (e.g. 20240101120000-*.org)
     (let* ((old-name (file-name-nondirectory old-file))
            (timestamp (if (string-match "^\\([0-9]\\{14\\}\\)-" old-name)
                           (concat (match-string 1 old-name) "-")
