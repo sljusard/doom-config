@@ -110,22 +110,15 @@
       (?ш . "sh") (?щ . "shch") (?ъ . "")    (?ы . "y")  (?ь . "")
       (?э . "e")  (?ю . "yu")   (?я . "ya"))
     "Simplified BGN/PCGN romanization of Russian used by Wikipedia.
-Differences from classic BGN/PCGN: ё is always yo rather than ë/yë, and
-ъ/ь are dropped rather than rendered as modifier primes. The entry for е here
-is the default; `my/translit-sbgn' overrides it word-initially and after
-`my/sbgn-y-triggers'.")
+Depends on `my/sbgn-y-triggers'.")
 
   (defconst my/sbgn-y-triggers
     '(?а ?е ?ё ?и ?о ?у ?ы ?э ?ю ?я ?й ?ъ ?ь)
     "Cyrillic characters after which е romanizes as ye rather than e.
-The ten vowels plus й, ъ and ь. The word-initial case is handled separately
-by the nil-`prev' branch in `my/translit-sbgn'.")
+The ten vowels plus й, ъ and ь.")
 
    (defun my/translit-sbgn (str)
-    "Romanize STR from Russian Cyrillic using simplified BGN/PCGN.
-Applies BGN's positional rule for е (ye word-initially and after a vowel, й,
-ъ or ь; e elsewhere) and collapses word-final -iy/-yy to -y.
-Non-Cyrillic characters pass through. Output is lowercase."
+     "Romanize STR from Russian Cyrillic using simplified BGN/PCGN."
     (let ((prev nil)   ; previous Cyrillic char, nil at a word boundary
           (acc  nil))
       (dolist (ch (append str nil))
@@ -216,7 +209,6 @@ Context-free. Non-Cyrillic characters pass through. Output is lowercase."
                 (cons (my/org-attach-rename-on-attach (car args))
                       (cdr args)))))
 
-;; rename slug according to new #+TITLE
 (defun my/org-roam-rename-file-to-title ()
   "Rename org-roam file slug according to the #+TITLE."
   (interactive)
@@ -271,9 +263,8 @@ Context-free. Non-Cyrillic characters pass through. Output is lowercase."
 
 ;; Automatic ':MODIFIED:' property in 'org-mode'
 (defun my/org-update-modified ()
-  "Обновить :MODIFIED: сразу после :CREATED: в property drawer.
-Работает только если :CREATED: существует. Если :MODIFIED: уже есть
-в этом drawer — переносит/обновляет его на позицию после :CREATED:."
+  "Updates or creates :MODIFIED: property. Will work
+only if :CREATED: is present"
   (when (and (derived-mode-p 'org-mode)
              (not my/inhibit-org-update-modified))
     (save-excursion
@@ -284,14 +275,12 @@ Context-free. Non-Cyrillic characters pass through. Output is lowercase."
               (drawer-end (save-excursion
                             (re-search-forward "^[ \t]*:END:[ \t]*$" nil t)
                             (line-beginning-position))))
-          ;; действуем только если :CREATED: внутри property drawer
+          ;; works only if :CREATED: is in the property drawer
           (when drawer-end
-            ;; удаляем существующий :MODIFIED: внутри этого drawer
             (save-excursion
               (goto-char created-end)
               (when (re-search-forward "^[ \t]*:MODIFIED:.*\n" drawer-end t)
                 (replace-match "")))
-            ;; вставляем свежий :MODIFIED: сразу после строки :CREATED:
             (goto-char created-end)
             (insert (format "\n%s:MODIFIED: %s"
                             indent
