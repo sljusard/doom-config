@@ -95,6 +95,15 @@
 (setq org-log-into-drawer t)
 (setq org-habit-show-habits-only-for-today nil)
 
+;; tags
+(setq org-tag-alist
+      '(("draft" . ?w)
+        ("revise" . ?r)
+        ("outdated" . ?o)
+        ("archived" . ?a)
+        ("temp" . ?t)
+        ))
+
 ;; ================================================ ;;
 ;; === 'org-roam' node RU -> EN transliteration === ;;
 ;; ================================================ ;;
@@ -169,8 +178,7 @@ Context-free. Non-Cyrillic characters pass through. Output is lowercase."
                (downcase translitted))))
     (string-trim slug "-+" "-+")))
 
-  (advice-add 'org-roam-node-slug :override #'my/org-roam-slug)
-
+;;  (advice-add 'org-roam-node-slug :override #'my/org-roam-slug) ;; disable for using default slug
 )
 
 (defun my/month-russian-genitive (&optional time)
